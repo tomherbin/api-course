@@ -2,15 +2,25 @@
 
 namespace App\Entity;
 
-use App\Repository\UserRepository;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
+use App\Entity\Customer;
 use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
+use App\Repository\UserRepository;
+use Doctrine\Common\Collections\Collection;
+use ApiPlatform\Core\Annotation\ApiResource;
+use Doctrine\Common\Collections\ArrayCollection;
+use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 
 /**
  * @ORM\Entity(repositoryClass=UserRepository::class)
+ * @ApiResource(
+ * collectionOperations={"GET", "POST"},
+ * itemOperations={"GET", "PUT", "DELETE", "PATCH"},
+ *  normalizationContext={
+ *      "groups"={"users_read"}
+ * }
+ * )
  */
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
@@ -18,16 +28,19 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      * @ORM\Id
      * @ORM\GeneratedValue
      * @ORM\Column(type="integer")
+     * @Groups({"users_read", "customers_read", "invoices_read"})
      */
     private $id;
 
     /**
      * @ORM\Column(type="string", length=180, unique=true)
+     * @Groups({"users_read", "customers_read", "invoices_read"})
      */
     private $email;
 
     /**
      * @ORM\Column(type="json")
+     * @Groups({"users_read", "customers_read", "invoices_read"})
      */
     private $roles = [];
 
@@ -39,16 +52,19 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     /**
      * @ORM\Column(type="string", length=255)
+     * @Groups({"users_read", "customers_read", "invoices_read"})
      */
     private $firstName;
 
     /**
      * @ORM\Column(type="string", length=255)
+     * @Groups({"users_read", "customers_read", "invoices_read"})
      */
     private $lastName;
 
     /**
-     * @ORM\OneToMany(targetEntity=customer::class, mappedBy="user")
+     * @ORM\OneToMany(targetEntity=Customer::class, mappedBy="user")
+     * @Groups({"users_read"})
      */
     private $customers;
 
@@ -171,14 +187,14 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     }
 
     /**
-     * @return Collection|customer[]
+     * @return Collection|Customer[]
      */
     public function getCustomers(): Collection
     {
         return $this->customers;
     }
 
-    public function addCustomer(customer $customer): self
+    public function addCustomer(Customer $customer): self
     {
         if (!$this->customers->contains($customer)) {
             $this->customers[] = $customer;
@@ -188,7 +204,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    public function removeCustomer(customer $customer): self
+    public function removeCustomer(Customer $customer): self
     {
         if ($this->customers->removeElement($customer)) {
             // set the owning side to null (unless already changed)
